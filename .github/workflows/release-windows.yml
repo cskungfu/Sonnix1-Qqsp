@@ -1,0 +1,48 @@
+name: Release Windows Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # 例如 v1.9.0
+
+jobs:
+  build-windows:
+    name: Build and Release for Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.5.3'          # 请根据你实际使用的 Qt 版本调整
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64' # 或 win64_mingw 依你所用编译器而定
+          modules: 'qtbase qtmultimedia qttools'
+          # 如果启用了 enable-webbox，请取消下一行注释
+          # extra: 'qtwebengine'
+
+      - name: Build with qmake and nmake
+        run: |
+          qmake Qqsp.pro CONFIG+=release
+          nmake
+
+      - name: Deploy with windeployqt
+        run: |
+          windeployqt --release release\Qqsp.exe
+
+      - name: Create ZIP archive
+        run: |
+          powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
+
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Qqsp-windows.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
