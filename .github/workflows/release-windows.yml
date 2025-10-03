@@ -3,10 +3,12 @@ name: Release Windows Build
 on:
   push:
     tags:
-      - 'v*'  # 例如 v1.9.0
+      - 'v*'
+  workflow_dispatch:  # 👈 添加这一行，即可在 Actions 页面手动运行
 
 jobs:
   build-windows:
+    # ... 其余内容不变
     name: Build and Release for Windows
     runs-on: windows-latest
     steps:
