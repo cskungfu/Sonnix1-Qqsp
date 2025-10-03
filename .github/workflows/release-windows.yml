@@ -1,4 +1,4 @@
-name: Release Windows Build (Qt 5)
+name: Release Windows Build (Qt 5.14.2)
 
 on:
   push:
@@ -20,10 +20,10 @@ jobs:
         with:
           arch: x64
 
-      - name: Install Qt 5.15.2 with WebEngine and Multimedia
+      - name: Install Qt 5.14.2 with WebEngine and Multimedia
         uses: jurplel/install-qt-action@v4
         with:
-          version: '5.15.2'
+          version: '5.14.2'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
