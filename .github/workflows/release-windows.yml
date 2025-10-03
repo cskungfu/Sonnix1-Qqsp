@@ -4,12 +4,11 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:  # 👈 添加这一行，即可在 Actions 页面手动运行
+  workflow_dispatch:
 
 jobs:
   build-windows:
-    # ... 其余内容不变
-    name: Build and Release for Windows
+    name: Build Windows Release
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -20,12 +19,12 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.5.3'          # 请根据你实际使用的 Qt 版本调整
+          version: '6.5.3'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_msvc2019_64' # 或 win64_mingw 依你所用编译器而定
-          modules: 'qtbase qtmultimedia qttools'
-          # 如果启用了 enable-webbox，请取消下一行注释
+          arch: 'win64_msvc2019_x64'  # ✅ 新命名（注意是 _x64，不是 _64）
+          modules: 'qtmultimedia'      # ✅ 只保留需要的额外模块
+          # 如果启用 WebBox，加上: qtwebengine
           # extra: 'qtwebengine'
 
       - name: Build with qmake and nmake
@@ -41,7 +40,7 @@ jobs:
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Create GitHub Release and Upload Asset
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
