@@ -10,12 +10,17 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install Qt 6.4.3
+      - name: Setup MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Qt 6.4.3 (MSVC)
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.4.3'
@@ -24,20 +29,20 @@ jobs:
           arch: 'win64_msvc2019_64'
           modules: 'qtmultimedia'
 
-      - name: Build
+      - name: Build with qmake and nmake
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy
+      - name: Deploy with windeployqt
         run: |
           windeployqt --release release\Qqsp.exe
 
-      - name: Package
+      - name: Create ZIP archive
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
