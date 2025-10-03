@@ -1,4 +1,4 @@
-name: Release Windows Build
+name: Release Windows Build (Qt 5)
 
 on:
   push:
@@ -20,22 +20,21 @@ jobs:
         with:
           arch: x64
 
-      - name: Install Qt 6.4.3 with WebEngine and Multimedia
+      - name: Install Qt 5.15.2 with WebEngine and Multimedia
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.4.3'
+          version: '5.15.2'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
-          modules: 'qtmultimedia'
-          extra: 'qt.webengine'  # 启用 WebEngine
+          modules: 'qtmultimedia qtwebengine'
 
       - name: Build
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy (includes WebEngine plugins)
+      - name: Deploy with WebEngine
         run: |
           windeployqt --release --webengine release\Qqsp.exe
 
