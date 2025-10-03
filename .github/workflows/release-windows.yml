@@ -15,30 +15,29 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Qt with qtmultimedia
+      - name: Install Qt (no extra modules needed for Qt 6.5+)
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.5.3'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_x64'
-          # 使用完整的 Qt 6 模块名（关键！）
-          modules: 'qt.qt6.653.addons.qtmultimedia'
+          # ⚠️ 不要写 modules 或 extra！Multimedia 已内置
 
-      - name: Build
+      - name: Build with qmake and nmake
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy
+      - name: Deploy with windeployqt
         run: |
           windeployqt --release release\Qqsp.exe
 
-      - name: Package
+      - name: Create ZIP archive
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Release
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
