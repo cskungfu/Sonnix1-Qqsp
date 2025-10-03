@@ -8,7 +8,6 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows Release
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -22,12 +21,10 @@ jobs:
           version: '6.5.3'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_msvc2019_x64'  # ✅ 新命名（注意是 _x64，不是 _64）
-          modules: 'qtmultimedia'      # ✅ 只保留需要的额外模块
-          # 如果启用 WebBox，加上: qtwebengine
-          # extra: 'qtwebengine'
+          arch: 'win64_msvc2019_x64'
+          extra: 'qt.multimedia'  # ✅ 正确的 Qt 6 模块名
 
-      - name: Build with qmake and nmake
+      - name: Build
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
@@ -36,11 +33,11 @@ jobs:
         run: |
           windeployqt --release release\Qqsp.exe
 
-      - name: Create ZIP archive
+      - name: Create ZIP
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Create GitHub Release
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
