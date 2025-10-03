@@ -20,7 +20,7 @@ jobs:
         with:
           arch: x64
 
-      - name: Install Qt 6.4.3 (MSVC)
+      - name: Install Qt 6.4.3 with WebEngine and Multimedia
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.4.3'
@@ -28,21 +28,22 @@ jobs:
           target: 'desktop'
           arch: 'win64_msvc2019_64'
           modules: 'qtmultimedia'
+          extra: 'qt.webengine'  # 启用 WebEngine
 
-      - name: Build with qmake and nmake
+      - name: Build
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy with windeployqt
+      - name: Deploy (includes WebEngine plugins)
         run: |
-          windeployqt --release release\Qqsp.exe
+          windeployqt --release --webengine release\Qqsp.exe
 
-      - name: Create ZIP archive
+      - name: Package
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Create GitHub Release
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
