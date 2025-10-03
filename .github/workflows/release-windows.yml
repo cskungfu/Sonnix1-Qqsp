@@ -10,34 +10,34 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - name: Install Qt (no extra modules needed for Qt 6.5+)
+      - name: Install Qt 6.4.3
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.5.3'
+          version: '6.4.3'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_msvc2019_x64'
-          # ⚠️ 不要写 modules 或 extra！Multimedia 已内置
+          arch: 'win64_msvc2019_64'
+          modules: 'qtmultimedia'
 
-      - name: Build with qmake and nmake
+      - name: Build
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy with windeployqt
+      - name: Deploy
         run: |
           windeployqt --release release\Qqsp.exe
 
-      - name: Create ZIP archive
+      - name: Package
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
-      - name: Create GitHub Release
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           files: Qqsp-windows.zip
