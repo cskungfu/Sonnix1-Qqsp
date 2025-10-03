@@ -1,4 +1,4 @@
-name: Release Windows Build (Qt 5.12.12 MinGW)
+name: Release Windows Build (No WebEngine)
 
 on:
   push:
@@ -15,28 +15,29 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Qt 5.12.12 (MinGW, fully open source)
+      - name: Setup MSVC Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install Qt 5.15.2 (base only, no addons)
         uses: jurplel/install-qt-action@v4
         with:
-          version: '5.12.12'
+          version: '5.15.2'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_mingw73'  # MinGW 7.3 (Qt 5.12 默认)
-          modules: 'qtmultimedia qtwebengine'
+          arch: 'win64_msvc2019_64'
+          # ⚠️ 不安装任何 modules！只用基础包
 
-      - name: Add MinGW to PATH
+      - name: Build without WebBox
         run: |
-          echo "C:\Qt\5.12.12\mingw73_64\bin" >> $GITHUB_PATH
-          echo "C:\Qt\Tools\mingw730_64\bin" >> $GITHUB_PATH
+          # 通过命令行覆盖 CONFIG，禁用 enable-webbox
+          qmake Qqsp.pro CONFIG+=release "CONFIG-=enable-webbox"
+          nmake
 
-      - name: Build with MinGW
+      - name: Deploy
         run: |
-          qmake Qqsp.pro CONFIG+=release
-          mingw32-make
-
-      - name: Deploy with windeployqt
-        run: |
-          windeployqt --release --webengine release\Qqsp.exe
+          windeployqt --release release\Qqsp.exe
 
       - name: Package
         run: |
