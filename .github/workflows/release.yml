@@ -1,0 +1,102 @@
+name: Build and Release Qqsp
+
+on:
+  push:
+    tags:
+      - 'v*'  # 例如 v1.9.0
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            qt_version: '6.5.3'
+            qt_arch: 'win64_msvc2019_64'
+            artifact_name: 'Qqsp-windows.zip'
+          - os: macos-latest
+            qt_version: '6.5.3'
+            qt_arch: 'mac_x64'
+            artifact_name: 'Qqsp-macos.zip'
+          - os: ubuntu-latest
+            qt_version: '6.5.3'
+            qt_arch: 'gcc_64'
+            artifact_name: 'Qqsp-linux.tar.gz'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: ${{ matrix.qt_version }}
+        host: ${{ runner.os == 'Windows' && 'windows' || runner.os == 'macOS' && 'mac' || 'linux' }}
+        target: desktop
+        arch: ${{ matrix.qt_arch }}
+        modules: 'qtbase qtmultimedia qttools'
+        # 如果你启用了 enable-webbox，请取消下一行注释
+        # extra: 'qtwebengine'
+
+    - name: Build on Linux
+      if: runner.os == 'Linux'
+      run: |
+        qmake Qqsp.pro CONFIG+=release
+        make -j$(nproc)
+        tar -czf Qqsp-linux.tar.gz Qqsp
+
+    - name: Build on macOS
+      if: runner.os == 'macOS'
+      run: |
+        qmake Qqsp.pro CONFIG+=release
+        make -j$(sysctl -n hw.ncpu)
+        # 打包 .app 并压缩
+        macdeployqt Qqsp.app -dmg
+        zip -r Qqsp-macos.zip Qqsp.app
+
+    - name: Build on Windows
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: |
+        qmake Qqsp.pro CONFIG+=release
+        nmake
+        windeployqt --release release\Qqsp.exe
+        powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_name }}
+
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Flatten and collect release assets
+      run: |
+        mkdir -p release-assets
+        find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" -o -name "*.dmg" \) -exec mv {} release-assets/ \;
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        files: release-assets/*
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
