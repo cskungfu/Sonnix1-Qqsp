@@ -15,25 +15,26 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Qt
+      - name: Install Qt with qtmultimedia
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.5.3'
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_x64'
-          extra: 'qt.multimedia'  # ✅ 正确的 Qt 6 模块名
+          # 使用完整的 Qt 6 模块名（关键！）
+          modules: 'qt.qt6.653.addons.qtmultimedia'
 
       - name: Build
         run: |
           qmake Qqsp.pro CONFIG+=release
           nmake
 
-      - name: Deploy with windeployqt
+      - name: Deploy
         run: |
           windeployqt --release release\Qqsp.exe
 
-      - name: Create ZIP
+      - name: Package
         run: |
           powershell Compress-Archive -Path release\* -DestinationPath Qqsp-windows.zip
 
